@@ -1,0 +1,6 @@
+{
+  "name": "Highscores API Dashboard",
+  "description": "An API and web dashboard that fetches, caches, and visualizes highscores from a GitHub repository.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
