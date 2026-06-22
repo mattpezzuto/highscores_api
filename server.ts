@@ -398,7 +398,7 @@ app.post("/api/highscores", async (req, res) => {
       date
     };
 
-    // 2. Insert and Sort (Double check priority sorting: Game score descending, tie broken by date ascending/earlier or newer)
+    // 2. Insert and Sort (Double check priority sorting: Game score descending, tie broken by date newer first)
     const proposedEntries = [...activeData.highscores, newEntry];
     proposedEntries.sort((a, b) => {
       const diff = (Number(b.score) || 0) - (Number(a.score) || 0);
@@ -406,8 +406,19 @@ app.post("/api/highscores", async (req, res) => {
       return new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime();
     });
 
-    // 3. Enforce strictly TOP 10 restriction
-    const trimmedScores = proposedEntries.slice(0, 10);
+    // 3. Limit to the top 3 high scores for each player
+    const playerCounts: Record<string, number> = {};
+    const filteredEntries: HighscoreEntry[] = [];
+    for (const entry of proposedEntries) {
+      const playerName = (entry.player || "").trim().toLowerCase();
+      playerCounts[playerName] = (playerCounts[playerName] || 0) + 1;
+      if (playerCounts[playerName] <= 3) {
+        filteredEntries.push(entry);
+      }
+    }
+
+    // 4. Enforce strictly TOP 10 overall restriction
+    const trimmedScores = filteredEntries.slice(0, 10);
 
     // Compute if the new score made it into the Top 10
     const madeItToTop10 = trimmedScores.some(
