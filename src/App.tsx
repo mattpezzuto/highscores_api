@@ -23,12 +23,20 @@ import {
   Info,
   Server,
   Sparkles,
-  PlusCircle
+  PlusCircle,
+  Gamepad2,
+  BookOpen,
+  ChevronLeft,
+  ArrowRight
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { HighscoreEntry, HighscoresAPIResponse } from "./types";
+import AcademyPortal from "./components/AcademyPortal";
 
 export default function App() {
+  // Selected Game directory state: null | "atonement" | "the_academy"
+  const [selectedGame, setSelectedGame] = useState<"atonement" | "the_academy" | null>(null);
+
   // Input settings for Custom Repo / File
   const [repo, setRepo] = useState("mattpezzuto/highscores");
   const [file, setFile] = useState("atonement.json");
@@ -305,22 +313,208 @@ export default function App() {
   "score": 5000
 }`;
 
+  if (selectedGame === null) {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-950 flex flex-col antialiased font-sans">
+        {/* Core Header */}
+        <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 sm:px-8 shrink-0 relative z-20">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white shrink-0 shadow-sm">
+              <Trophy className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h1 className="text-sm sm:text-base font-bold tracking-tight text-slate-900 font-display">
+                Arcade Score Ledger
+              </h1>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-150 font-mono">
+              Leaderboard Portal v1.1.0
+            </span>
+          </div>
+        </header>
+
+        {/* Hero Section */}
+        <div className="flex-1 max-w-[1000px] w-full mx-auto px-4 sm:px-8 py-12 flex flex-col justify-center">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-650 border border-indigo-100 uppercase tracking-wider mb-4 inline-block">
+              Choose Directory
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 font-display mb-4">
+              Select a Game Database
+            </h2>
+            <p className="text-sm text-slate-500 leading-relaxed">
+              Explore custom Highscore REST APIs, inspect real-time leaderboards, commit local sandbox scores, or test live integration queries across active play files.
+            </p>
+          </div>
+
+          {/* Grid Selection */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto w-full">
+            
+            {/* Card 1: Atonement (Active) */}
+            <motion.div
+              whileHover={{ y: -4, scale: 1.01 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setSelectedGame("atonement")}
+              className="bg-white border-2 border-indigo-100 hover:border-indigo-500 rounded-2xl p-6 sm:p-8 cursor-pointer shadow-sm hover:shadow-md transition flex flex-col justify-between group relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/50 rounded-bl-full -mr-8 -mt-8 -z-0 transition-all group-hover:scale-110" />
+              
+              <div className="relative z-10 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 bg-indigo-950 group-hover:bg-indigo-900 rounded-xl flex items-center justify-center text-white shadow-md shadow-indigo-100 transition-colors">
+                    <Gamepad2 className="w-6 h-6" />
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center gap-1.5 font-mono">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                    </span>
+                    API Active
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold tracking-tight text-slate-900 font-display group-hover:text-indigo-650 transition-colors flex items-center gap-2">
+                    <span>Atonement</span>
+                    <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                  </h3>
+                  <p className="text-xs text-slate-550 leading-relaxed">
+                    Access active highscores, test GET filters (limit, order, fuzzy search), submit real-time scores, and review Git proxy metadata. Powered by in-memory sandbox and live GitHub synchronization.
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative z-10 mt-8 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 font-mono">
+                <span>FILE: atonement.json</span>
+                <span className="text-indigo-650 font-bold group-hover:underline flex items-center gap-1">
+                  Open Game directory &rarr;
+                </span>
+              </div>
+            </motion.div>
+
+            {/* Card 2: The Academy (Pending) */}
+            <motion.div
+              whileHover={{ y: -4, scale: 1.01 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setSelectedGame("the_academy")}
+              className="bg-white border border-slate-200 hover:border-slate-400 rounded-2xl p-6 sm:p-8 cursor-pointer shadow-xs hover:shadow-sm transition flex flex-col justify-between group relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-full -mr-8 -mt-8 -z-0 transition-all group-hover:scale-110" />
+              
+              <div className="relative z-10 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 bg-slate-100 group-hover:bg-slate-200 rounded-xl flex items-center justify-center text-slate-600 transition-colors">
+                    <BookOpen className="w-6 h-6" />
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200 font-mono">
+                    Coming Soon
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold tracking-tight text-slate-900 font-display group-hover:text-indigo-650 transition-colors flex items-center gap-2">
+                    <span>The Academy</span>
+                    <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                  </h3>
+                  <p className="text-xs text-slate-550 leading-relaxed">
+                    Nerve-wracking academy trial-by-fire sequence scores. Competitive leaderboards and historical telemetry parameters are under design and will be deployed in an upcoming update.
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative z-10 mt-8 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 font-mono">
+                <span>STATUS: PRE-ALPHA</span>
+                <span className="text-slate-550 group-hover:underline">
+                  Preview options &rarr;
+                </span>
+              </div>
+            </motion.div>
+
+          </div>
+        </div>
+
+        {/* Minimal Footer */}
+        <footer className="h-11 bg-white border-t border-slate-200 flex items-center justify-between px-6 sm:px-8 text-[9px] font-bold text-slate-400 shrink-0 uppercase tracking-widest relative z-10">
+          <div>DEPLOY_REGION: AUTO-CONTAINER</div>
+          <div className="flex items-center gap-4">
+            <span>SCORE_ROUTER - v1.0.0</span>
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
+  if (selectedGame === "the_academy") {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-950 flex flex-col antialiased font-sans">
+        {/* Core Header */}
+        <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 sm:px-8 shrink-0 relative z-20">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSelectedGame(null)}
+              className="flex items-center text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 px-3 py-1.5 rounded-lg border border-slate-200 transition duration-150 shrink-0 cursor-pointer"
+              id="back_from_academy_to_selection_button"
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              <span>Back</span>
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white shrink-0 shadow-sm">
+                <BookOpen className="w-4 h-4 text-amber-500" />
+              </div>
+              <div>
+                <h1 className="text-sm sm:text-base font-bold tracking-tight text-slate-900 font-display flex items-center gap-2">
+                  <span>The Academy Archives Portal</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-250 font-mono font-bold">
+                    API Active
+                  </span>
+                </h1>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500 border border-slate-200 font-mono">
+              Live Database
+            </span>
+          </div>
+        </header>
+
+        {/* Live Academy Database UI */}
+        <AcademyPortal onBack={() => setSelectedGame(null)} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 flex flex-col antialiased font-sans">
       
       {/* Pristine Minimalism Header */}
       <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 sm:px-8 shrink-0 relative z-21">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white shrink-0 shadow-sm">
-            <Trophy className="w-4 h-4 text-white" />
-          </div>
-          <div className="flex flex-col">
-            <h1 className="text-sm sm:text-base font-bold tracking-tight text-slate-900 font-display flex items-center gap-2">
-              <span>Atonement Highscores API</span>
-              <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-800 border border-slate-200 font-mono">
-                Active
-              </span>
-            </h1>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setSelectedGame(null)}
+            className="flex items-center text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 px-3 py-1.5 rounded-lg border border-slate-200 transition duration-150 shrink-0 cursor-pointer"
+            id="back_to_selection_button"
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            <span>Back</span>
+          </button>
+          
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white shrink-0 shadow-sm">
+              <Trophy className="w-4 h-4 text-white" />
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-sm sm:text-base font-bold tracking-tight text-slate-900 font-display flex items-center gap-2">
+                <span>Atonement Highscores API</span>
+                <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-800 border border-slate-200 font-mono">
+                  Active
+                </span>
+              </h1>
+            </div>
           </div>
         </div>
 

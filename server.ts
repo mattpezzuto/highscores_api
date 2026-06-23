@@ -6,7 +6,7 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
-import { HighscoreEntry, HighscoresData, HighscoresAPIResponse } from "./src/types";
+import { HighscoreEntry, HighscoresData, HighscoresAPIResponse, Jedi, AcademyAPIResponse } from "./src/types";
 
 // Load environment variables
 dotenv.config({ override: true });
@@ -36,6 +36,14 @@ interface CacheEntry {
 
 let inMemoryCache: CacheEntry | null = null;
 const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+
+// Academy Cache configuration
+interface AcademyCacheEntry {
+  data: Jedi[];
+  fetchedAt: number;
+}
+const academyCache: Record<string, AcademyCacheEntry> = {};
+
 
 /**
  * Helper to check if GITHUB_TOKEN is configured in environment
@@ -540,6 +548,298 @@ app.post("/api/highscores", async (req, res) => {
     return res.status(200).json({
       success: false,
       error: err.message || "Failed to parse/update highscores correctly."
+    });
+  }
+});
+
+/**
+ * Fetches all Academy Jedis from GitHub directory/files in parallel.
+ */
+async function fetchAcademyJedis(repo: string, branch: string): Promise<Jedi[]> {
+  const token = process.env.GITHUB_TOKEN;
+  const hasToken = token && token !== "your_github_personal_access_token_here" && token.trim() !== "";
+  
+  const headers: Record<string, string> = {
+    "User-Agent": "Academy-Jedi-App"
+  };
+  if (hasToken) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  
+  // 1. List directory content at /academy
+  let listUrl = `https://api.github.com/repos/${repo}/contents/academy?ref=${branch}`;
+  let listResponse = await fetch(listUrl, { headers });
+  
+  // Try master fallback if main 404s
+  if (!listResponse.ok && listResponse.status === 404 && branch === "main") {
+    const fallbackListUrl = `https://api.github.com/repos/${repo}/contents/academy?ref=master`;
+    const fallbackResponse = await fetch(fallbackListUrl, { headers });
+    if (fallbackResponse.ok) {
+      listUrl = fallbackListUrl;
+      listResponse = fallbackResponse;
+    }
+  }
+
+  if (listResponse.status === 404) {
+    console.log(`[Academy Fetch] 'academy/' directory not found. Returning empty list.`);
+    return [];
+  }
+  
+  if (!listResponse.ok) {
+    throw new Error(`Failed to list 'academy' directory. GitHub status: ${listResponse.status}`);
+  }
+  
+  const filesList = await listResponse.json() as any;
+  if (!Array.isArray(filesList)) {
+    return [];
+  }
+  
+  // Filter for .json files inside directory
+  const jsonFiles = filesList.filter(f => f.type === "file" && f.name.endsWith(".json"));
+  
+  // 2. Fetch each Jedi file content in parallel
+  const jedis: Jedi[] = [];
+  const fetchPromises = jsonFiles.map(async (fileInfo) => {
+    try {
+      let contentResponse;
+      if (hasToken) {
+        // GET API with Raw Accept header so GitHub sends decoded raw file back (ideal for private repos)
+        const fileApiUrl = `https://api.github.com/repos/${repo}/contents/academy/${fileInfo.name}?ref=${branch}`;
+        contentResponse = await fetch(fileApiUrl, {
+          headers: {
+            ...headers,
+            "Accept": "application/vnd.github.v3.raw"
+          }
+        });
+      } else {
+        // Public download fallback
+        const rawUrl = fileInfo.download_url || `https://raw.githubusercontent.com/${repo}/${branch}/academy/${fileInfo.name}`;
+        contentResponse = await fetch(rawUrl, { headers });
+      }
+      
+      if (contentResponse.ok) {
+        const text = await contentResponse.text();
+        const jediData = JSON.parse(text) as Jedi;
+        if (jediData && jediData.id) {
+          jedis.push(jediData);
+        }
+      }
+    } catch (err) {
+      console.error(`[Academy Fetch] Error loading Jedi file ${fileInfo.name}:`, err);
+    }
+  });
+  
+  await Promise.all(fetchPromises);
+  return jedis;
+}
+
+// REST Endpoint: Get Academy Jedi directory
+app.get("/api/academy", async (req, res) => {
+  const repo = (req.query.repo as string) || "mattpezzuto/highscores";
+  const branch = (req.query.branch as string) || "main";
+  const forceRefresh = req.query.refresh === "true" || req.headers["cache-control"] === "no-cache";
+  
+  const cacheKey = `${repo}/${branch}`;
+  const now = Date.now();
+  const startTime = Date.now();
+  
+  let cached = false;
+  let activeJedis: Jedi[] = [];
+  
+  try {
+    const isCacheValid = 
+      academyCache[cacheKey] && 
+      (now - academyCache[cacheKey].fetchedAt < CACHE_TTL_MS) &&
+      !forceRefresh;
+      
+    if (isCacheValid) {
+      activeJedis = academyCache[cacheKey].data;
+      cached = true;
+    } else {
+      activeJedis = await fetchAcademyJedis(repo, branch);
+      academyCache[cacheKey] = {
+        data: activeJedis,
+        fetchedAt: now
+      };
+    }
+    
+    // Process search / filtering on active Jedis
+    let filteredJedis = [...activeJedis];
+    
+    // Fuzzy search
+    const searchQuery = req.query.search as string;
+    if (searchQuery) {
+      const lower = searchQuery.toLowerCase().trim();
+      filteredJedis = filteredJedis.filter(j => 
+        (j.name || "").toLowerCase().includes(lower) ||
+        (j.accountId || "").toLowerCase().includes(lower) ||
+        (j.title || "").toLowerCase().includes(lower) ||
+        (j.species || "").toLowerCase().includes(lower) ||
+        (j.background || "").toLowerCase().includes(lower) ||
+        (j.lightsaber?.color || "").toLowerCase().includes(lower) ||
+        (j.lightsaber?.form || "").toLowerCase().includes(lower)
+      );
+    }
+    
+    // Direct accountId filter
+    const accountFilter = req.query.accountId as string;
+    if (accountFilter) {
+      const lower = accountFilter.toLowerCase().trim();
+      filteredJedis = filteredJedis.filter(j => (j.accountId || "").toLowerCase() === lower);
+    }
+    
+    return res.json({
+      success: true,
+      data: filteredJedis,
+      metadata: {
+        sourceRepo: repo,
+        branch,
+        cached,
+        lastFetchedAt: academyCache[cacheKey] ? new Date(academyCache[cacheKey].fetchedAt).toISOString() : new Date().toISOString(),
+        latencyMs: Date.now() - startTime,
+        githubTokenConfigured: isTokenConfigured()
+      }
+    });
+    
+  } catch (err: any) {
+    console.error("GET Academy Error:", err);
+    return res.status(200).json({
+      success: false,
+      data: [],
+      metadata: {
+        sourceRepo: repo,
+        branch,
+        cached: false,
+        lastFetchedAt: new Date().toISOString(),
+        latencyMs: Date.now() - startTime,
+        githubTokenConfigured: isTokenConfigured()
+      },
+      error: err.message || "Failed to load Academy Jedi index from GitHub."
+    });
+  }
+});
+
+// REST Endpoint: Post/Add/Update individual Jedi record
+app.post("/api/academy", async (req, res) => {
+  const repo = (req.body.repo as string) || "mattpezzuto/highscores";
+  const branch = (req.body.branch as string) || "main";
+  
+  const jediPayload = req.body.jedi || req.body;
+  
+  // Extract and strip wrapper parameters if needed
+  const { repo: bodyRepo, branch: bodyBranch, ...cleanJedi } = jediPayload;
+  
+  if (!cleanJedi.accountId || typeof cleanJedi.accountId !== "string" || cleanJedi.accountId.trim() === "") {
+    return res.status(200).json({ success: false, error: "Missing or invalid 'accountId' parameter." });
+  }
+  
+  if (!cleanJedi.name || typeof cleanJedi.name !== "string" || cleanJedi.name.trim() === "") {
+    return res.status(200).json({ success: false, error: "Missing or invalid 'name' parameter." });
+  }
+  
+  const startTime = Date.now();
+  let githubSaved = false;
+  let writeMessage = "";
+  
+  // Force a slugified valid ID if not specified
+  const id = cleanJedi.id || `jedi_${cleanJedi.accountId.trim().toLowerCase()}_${cleanJedi.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
+  cleanJedi.id = id;
+  
+  try {
+    const token = process.env.GITHUB_TOKEN;
+    const file = `academy/${id}.json`;
+    
+    if (token && token !== "your_github_personal_access_token_here" && token.trim() !== "") {
+      const metaUrl = `https://api.github.com/repos/${repo}/contents/${file}?ref=${branch}`;
+      let sha: string | undefined = undefined;
+      
+      try {
+        const getMeta = await fetch(metaUrl, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "Academy-Jedi-App"
+          }
+        });
+        
+        if (getMeta.ok) {
+          const metaJson = await getMeta.json() as any;
+          if (metaJson) sha = metaJson.sha;
+        }
+      } catch (e) {
+        console.warn("[Academy PUT] File meta inspect error, proceeding with override.");
+      }
+      
+      const fileContentString = JSON.stringify(cleanJedi, null, 2);
+      const b64Payload = Buffer.from(fileContentString, "utf-8").toString("base64");
+      
+      const putUrl = `https://api.github.com/repos/${repo}/contents/${file}`;
+      const putBody = {
+        message: `Academy database update: saved Jedi '${cleanJedi.name}' (${cleanJedi.title})`,
+        content: b64Payload,
+        sha,
+        branch
+      };
+      
+      const putResponse = await fetch(putUrl, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Accept": "application/vnd.github.v3+json",
+          "Content-Type": "application/json",
+          "User-Agent": "Academy-Jedi-App"
+        },
+        body: JSON.stringify(putBody)
+      });
+      
+      if (putResponse.ok) {
+        githubSaved = true;
+        writeMessage = `Successfully committed Jedi record '${cleanJedi.name}' (${id}) backup to GitHub.`;
+      } else {
+        const textErr = await putResponse.text();
+        let errMsg = `GitHub commit failed with status ${putResponse.status}.`;
+        try {
+          const parsed = JSON.parse(textErr);
+          errMsg = parsed.message || errMsg;
+        } catch {}
+        
+        return res.status(200).json({
+          success: false,
+          error: `Failed writing to Git: ${errMsg}`,
+          githubStatus: putResponse.status
+        });
+      }
+    } else {
+      writeMessage = "Saved/updated Jedi in-memory active environment sandbox.";
+    }
+    
+    // Secure matching inside client cache immediately
+    const cacheKey = `${repo}/${branch}`;
+    if (!academyCache[cacheKey]) {
+      academyCache[cacheKey] = { data: [], fetchedAt: Date.now() };
+    }
+    
+    const idx = academyCache[cacheKey].data.findIndex(j => j.id === id);
+    if (idx !== -1) {
+      academyCache[cacheKey].data[idx] = cleanJedi;
+    } else {
+      academyCache[cacheKey].data.push(cleanJedi);
+    }
+    academyCache[cacheKey].fetchedAt = Date.now();
+    
+    return res.json({
+      success: true,
+      data: cleanJedi,
+      simulation: !githubSaved,
+      message: writeMessage,
+      latencyMs: Date.now() - startTime
+    });
+    
+  } catch (err: any) {
+    console.error("POST Academy Jedi Failure:", err);
+    return res.status(200).json({
+      success: false,
+      error: err.message || "Failed to commit Jedi record data."
     });
   }
 });
