@@ -1,6 +1,6 @@
 {
   "name": "Highscores API Dashboard",
-  "description": "An API and web dashboard that fetches, caches, and visualizes highscores from a GitHub repository.",
+  "description": "API hub and interactive web portal for Highscores, Jedi Academy Archives, and Grand Turf Thoroughbred Racing & Breeding REST APIs.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

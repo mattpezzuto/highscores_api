@@ -32,10 +32,11 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { HighscoreEntry, HighscoresAPIResponse } from "./types";
 import AcademyPortal from "./components/AcademyPortal";
+import GrandTurfDashboard from "./components/GrandTurfDashboard";
 
 export default function App() {
-  // Selected Game directory state: null | "atonement" | "the_academy"
-  const [selectedGame, setSelectedGame] = useState<"atonement" | "the_academy" | null>(null);
+  // Selected Game directory state: null | "atonement" | "the_academy" | "grand_turf"
+  const [selectedGame, setSelectedGame] = useState<"atonement" | "the_academy" | "grand_turf" | null>(null);
 
   // Input settings for Custom Repo / File
   const [repo, setRepo] = useState("mattpezzuto/highscores");
@@ -350,14 +351,14 @@ export default function App() {
           </div>
 
           {/* Grid Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto w-full">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto w-full">
             
             {/* Card 1: Atonement (Active) */}
             <motion.div
               whileHover={{ y: -4, scale: 1.01 }}
               transition={{ duration: 0.2 }}
               onClick={() => setSelectedGame("atonement")}
-              className="bg-white border-2 border-indigo-100 hover:border-indigo-500 rounded-2xl p-6 sm:p-8 cursor-pointer shadow-sm hover:shadow-md transition flex flex-col justify-between group relative overflow-hidden"
+              className="bg-white border-2 border-indigo-100 hover:border-indigo-500 rounded-2xl p-6 cursor-pointer shadow-sm hover:shadow-md transition flex flex-col justify-between group relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/50 rounded-bl-full -mr-8 -mt-8 -z-0 transition-all group-hover:scale-110" />
               
@@ -381,7 +382,7 @@ export default function App() {
                     <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                   </h3>
                   <p className="text-xs text-slate-550 leading-relaxed">
-                    Access active highscores, test GET filters (limit, order, fuzzy search), submit real-time scores, and review Git proxy metadata. Powered by in-memory sandbox and live GitHub synchronization.
+                    Access active highscores, test GET filters (limit, order, fuzzy search), submit real-time scores, and review Git proxy metadata.
                   </p>
                 </div>
               </div>
@@ -394,40 +395,87 @@ export default function App() {
               </div>
             </motion.div>
 
-            {/* Card 2: The Academy (Pending) */}
+            {/* Card 2: The Academy */}
             <motion.div
               whileHover={{ y: -4, scale: 1.01 }}
               transition={{ duration: 0.2 }}
               onClick={() => setSelectedGame("the_academy")}
-              className="bg-white border border-slate-200 hover:border-slate-400 rounded-2xl p-6 sm:p-8 cursor-pointer shadow-xs hover:shadow-sm transition flex flex-col justify-between group relative overflow-hidden"
+              className="bg-white border border-slate-200 hover:border-slate-400 rounded-2xl p-6 cursor-pointer shadow-xs hover:shadow-sm transition flex flex-col justify-between group relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-full -mr-8 -mt-8 -z-0 transition-all group-hover:scale-110" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50/50 rounded-bl-full -mr-8 -mt-8 -z-0 transition-all group-hover:scale-110" />
               
               <div className="relative z-10 space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 bg-slate-100 group-hover:bg-slate-200 rounded-xl flex items-center justify-center text-slate-600 transition-colors">
+                  <div className="w-12 h-12 bg-amber-950 group-hover:bg-amber-900 rounded-xl flex items-center justify-center text-amber-400 shadow-md transition-colors">
                     <BookOpen className="w-6 h-6" />
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200 font-mono">
-                    Coming Soon
+                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center gap-1.5 font-mono">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                    </span>
+                    API Active
                   </span>
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="text-xl font-bold tracking-tight text-slate-900 font-display group-hover:text-indigo-650 transition-colors flex items-center gap-2">
+                  <h3 className="text-xl font-bold tracking-tight text-slate-900 font-display group-hover:text-amber-800 transition-colors flex items-center gap-2">
                     <span>The Academy</span>
                     <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                   </h3>
                   <p className="text-xs text-slate-550 leading-relaxed">
-                    Nerve-wracking academy trial-by-fire sequence scores. Competitive leaderboards and historical telemetry parameters are under design and will be deployed in an upcoming update.
+                    Jedi archives database. Inspect galactic records, combat telemetry, training logs, DOB age calculation, and GitHub backup synchronization.
                   </p>
                 </div>
               </div>
 
               <div className="relative z-10 mt-8 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 font-mono">
-                <span>STATUS: PRE-ALPHA</span>
-                <span className="text-slate-550 group-hover:underline">
-                  Preview options &rarr;
+                <span>DIRECTORY: academy/</span>
+                <span className="text-amber-800 font-bold group-hover:underline">
+                  Open Archives &rarr;
+                </span>
+              </div>
+            </motion.div>
+
+            {/* Card 3: Grand Turf (New Game) */}
+            <motion.div
+              whileHover={{ y: -4, scale: 1.01 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setSelectedGame("grand_turf")}
+              className="bg-white border-2 border-emerald-100 hover:border-emerald-500 rounded-2xl p-6 cursor-pointer shadow-sm hover:shadow-md transition flex flex-col justify-between group relative overflow-hidden"
+              id="grand_turf_directory_card"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50/50 rounded-bl-full -mr-8 -mt-8 -z-0 transition-all group-hover:scale-110" />
+              
+              <div className="relative z-10 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 bg-slate-900 group-hover:bg-emerald-950 rounded-xl flex items-center justify-center text-emerald-400 shadow-md transition-colors">
+                    <Trophy className="w-6 h-6 text-amber-400" />
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center gap-1.5 font-mono">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                    </span>
+                    API Active
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold tracking-tight text-slate-900 font-display group-hover:text-emerald-700 transition-colors flex items-center gap-2">
+                    <span>Grand Turf</span>
+                    <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                  </h3>
+                  <p className="text-xs text-slate-550 leading-relaxed">
+                    Thoroughbred racing & breeding API. Test APIs to generate base horses, breed foals by passing sire and dam parent IDs, and query horse catalogs.
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative z-10 mt-8 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 font-mono">
+                <span>DIRECTORY: grandturf/</span>
+                <span className="text-emerald-700 font-bold group-hover:underline">
+                  Open Dashboard &rarr;
                 </span>
               </div>
             </motion.div>
@@ -484,6 +532,48 @@ export default function App() {
 
         {/* Live Academy Database UI */}
         <AcademyPortal onBack={() => setSelectedGame(null)} />
+      </div>
+    );
+  }
+
+  if (selectedGame === "grand_turf") {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-950 flex flex-col antialiased font-sans">
+        {/* Core Header */}
+        <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 sm:px-8 shrink-0 relative z-20">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSelectedGame(null)}
+              className="flex items-center text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 px-3 py-1.5 rounded-lg border border-slate-200 transition duration-150 shrink-0 cursor-pointer"
+              id="back_from_grandturf_to_selection_button"
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              <span>Back</span>
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white shrink-0 shadow-sm">
+                <Trophy className="w-4 h-4 text-amber-400" />
+              </div>
+              <div>
+                <h1 className="text-sm sm:text-base font-bold tracking-tight text-slate-900 font-display flex items-center gap-2">
+                  <span>Grand Turf Thoroughbred Services</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-250 font-mono font-bold">
+                    API Active
+                  </span>
+                </h1>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500 border border-slate-200 font-mono">
+              Live Database & Breeder
+            </span>
+          </div>
+        </header>
+
+        {/* Live Grand Turf Dashboard UI */}
+        <GrandTurfDashboard onBack={() => setSelectedGame(null)} />
       </div>
     );
   }

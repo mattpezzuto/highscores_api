@@ -25,13 +25,38 @@ interface AcademyPortalProps {
   onBack: () => void;
 }
 
+export function calculateAge(dobString: string): number {
+  if (!dobString) return 14;
+  const dob = new Date(dobString);
+  const now = new Date();
+  
+  // Normalize to midnight to accurately count calendar days difference
+  const dobMidnight = new Date(dob.getFullYear(), dob.getMonth(), dob.getDate());
+  const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  const diffTime = nowMidnight.getTime() - dobMidnight.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 2) {
+    return 14;
+  }
+  return 14 + Math.floor(Math.log2(diffDays));
+}
+
+export function getDobFromAge(age: number): string {
+  const diffDays = Math.pow(2, Math.max(0, age - 14));
+  const dobDate = new Date();
+  dobDate.setDate(dobDate.getDate() - diffDays);
+  return dobDate.toISOString().split("T")[0];
+}
+
 const TEMPLATE_JEDI_LIST: Partial<Jedi>[] = [
   {
     accountId: "oring",
     name: "Kalren Voss",
     title: "Jedi Knight",
     species: "Human",
-    age: 28,
+    dob: getDobFromAge(28),
     gender: "Male",
     height: "1.85m",
     affiliation: "Jedi Order",
@@ -86,7 +111,7 @@ const TEMPLATE_JEDI_LIST: Partial<Jedi>[] = [
     name: "Ayla Korr",
     title: "Jedi Guardian",
     species: "Twi'lek",
-    age: 24,
+    dob: getDobFromAge(24),
     gender: "Female",
     height: "1.78m",
     affiliation: "Jedi Order",
@@ -141,7 +166,7 @@ const TEMPLATE_JEDI_LIST: Partial<Jedi>[] = [
     name: "Vaelen Shan",
     title: "Jedi Consular",
     species: "Mirialan",
-    age: 32,
+    dob: getDobFromAge(32),
     gender: "Male",
     height: "1.82m",
     affiliation: "Jedi Order",
@@ -224,7 +249,7 @@ export default function AcademyPortal({ onBack }: AcademyPortalProps) {
   const [postName, setPostName] = useState("Kalren Voss");
   const [postTitle, setPostTitle] = useState("Jedi Knight");
   const [postSpecies, setPostSpecies] = useState("Human");
-  const [postAge, setPostAge] = useState<number>(28);
+  const [postDob, setPostDob] = useState<string>(getDobFromAge(28));
   const [postGender, setPostGender] = useState("Male");
   const [postHeight, setPostHeight] = useState("1.85m");
   const [postAffiliation, setPostAffiliation] = useState("Jedi Order");
@@ -310,7 +335,7 @@ export default function AcademyPortal({ onBack }: AcademyPortalProps) {
     setPostName(jedi.name || "Unnamed Jedi");
     setPostTitle(jedi.title || "Padawan");
     setPostSpecies(jedi.species || "Human");
-    setPostAge(jedi.age || 20);
+    setPostDob(jedi.dob || getDobFromAge(20));
     setPostGender(jedi.gender || "Non-binary");
     setPostHeight(jedi.height || "1.80m");
     setPostAffiliation(jedi.affiliation || "Jedi Order");
@@ -376,7 +401,7 @@ export default function AcademyPortal({ onBack }: AcademyPortalProps) {
       name: postName.trim(),
       title: postTitle.trim(),
       species: postSpecies.trim(),
-      age: Number(postAge) || 25,
+      dob: postDob,
       gender: postGender.trim(),
       height: postHeight.trim(),
       affiliation: postAffiliation.trim(),
@@ -776,7 +801,7 @@ export default function AcademyPortal({ onBack }: AcademyPortalProps) {
                         </span>
                       </h4>
                       <p className="text-xs text-slate-500 font-mono">
-                        Galactic File Index: {selectedJedi.accountId} &bull; Age {selectedJedi.age}
+                        Galactic File Index: {selectedJedi.accountId} &bull; Age {selectedJedi.dob ? calculateAge(selectedJedi.dob) : ((selectedJedi as any).age || 14)} {selectedJedi.dob && `(Born ${selectedJedi.dob})`}
                       </p>
                     </div>
                   </div>
@@ -1022,13 +1047,14 @@ export default function AcademyPortal({ onBack }: AcademyPortalProps) {
 
                     <div className="grid grid-cols-3 gap-2">
                       <div>
-                        <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Age</label>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                          DOB (Age: {calculateAge(postDob)})
+                        </label>
                         <input 
-                          type="number" 
-                          value={postAge}
-                          onChange={(e) => setPostAge(Number(e.target.value))}
+                          type="date" 
+                          value={postDob}
+                          onChange={(e) => setPostDob(e.target.value)}
                           className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none"
-                          placeholder="28"
                         />
                       </div>
                       <div>

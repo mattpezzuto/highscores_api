@@ -6,7 +6,8 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
-import { HighscoreEntry, HighscoresData, HighscoresAPIResponse, Jedi, AcademyAPIResponse } from "./src/types";
+import { HighscoreEntry, HighscoresData, HighscoresAPIResponse, Jedi, AcademyAPIResponse, Horse, HorseStats, HorseRacingRecord, GrandTurfAPIResponse } from "./src/types";
+import { grandTurfRouter } from "./src/features/grandTurf";
 
 // Load environment variables
 dotenv.config({ override: true });
@@ -843,6 +844,13 @@ app.post("/api/academy", async (req, res) => {
     });
   }
 });
+
+// ==========================================
+// GRAND TURF THOROUGHBRED HORSE API ENGINE
+// ==========================================
+app.use("/api/grandturf", grandTurfRouter);
+app.use("/api", grandTurfRouter);
+
 
 // Start integration with Vite/Express template
 async function startServer() {
