@@ -171,7 +171,8 @@ grandTurfRouter.post("/horses/generate", async (req: Request, res: Response) => 
 
   try {
     const { name, gender, coatColor } = req.body;
-    const newHorse = createRandomHorseData(name, gender, coatColor);
+    const trainerId = req.body.trainer_id || req.body.trainerId || req.query.trainer_id || req.query.trainerId || null;
+    const newHorse = createRandomHorseData(name, gender, coatColor, trainerId);
 
     const { githubSaved, message } = await saveHorseToGitHubOrCache(newHorse, repo, branch);
 
@@ -202,6 +203,7 @@ grandTurfRouter.post("/horses/breed", async (req: Request, res: Response) => {
   const name = req.body.name;
   const gender = req.body.gender;
   const coatColor = req.body.coatColor;
+  const trainerId = req.body.trainer_id || req.body.trainerId || req.query.trainer_id || req.query.trainerId || null;
 
   if (!sireId || !damId) {
     return res.status(200).json({
@@ -235,7 +237,7 @@ grandTurfRouter.post("/horses/breed", async (req: Request, res: Response) => {
       });
     }
 
-    const childHorse = breedChildHorse(sire, dam, name, gender, coatColor);
+    const childHorse = breedChildHorse(sire, dam, name, gender, coatColor, trainerId);
     const { githubSaved, message } = await saveHorseToGitHubOrCache(childHorse, repo, branch);
 
     return res.json({
@@ -273,7 +275,8 @@ async function generateHandler(req: Request, res: Response) {
 
   try {
     const { name, gender, coatColor } = req.body;
-    const newHorse = createRandomHorseData(name, gender, coatColor);
+    const trainerId = req.body.trainer_id || req.body.trainerId || req.query.trainer_id || req.query.trainerId || null;
+    const newHorse = createRandomHorseData(name, gender, coatColor, trainerId);
     const { githubSaved, message } = await saveHorseToGitHubOrCache(newHorse, repo, branch);
 
     return res.json({
@@ -301,6 +304,7 @@ async function breedHandler(req: Request, res: Response) {
   const name = req.body.name;
   const gender = req.body.gender;
   const coatColor = req.body.coatColor;
+  const trainerId = req.body.trainer_id || req.body.trainerId || req.query.trainer_id || req.query.trainerId || null;
 
   if (!sireId || !damId) {
     return res.status(200).json({
@@ -327,7 +331,7 @@ async function breedHandler(req: Request, res: Response) {
       });
     }
 
-    const childHorse = breedChildHorse(sire, dam, name, gender, coatColor);
+    const childHorse = breedChildHorse(sire, dam, name, gender, coatColor, trainerId);
     const { githubSaved, message } = await saveHorseToGitHubOrCache(childHorse, repo, branch);
 
     return res.json({

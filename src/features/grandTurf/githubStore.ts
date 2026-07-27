@@ -9,13 +9,25 @@ export interface GrandTurfCacheEntry {
 export const grandTurfCache: Record<string, GrandTurfCacheEntry> = {};
 export const CACHE_TTL_MS = 60 * 1000; // 60 seconds
 
+export function getGitHubToken(): string | null {
+  const envToken = process.env.GITHUB_TOKEN;
+  if (
+    envToken &&
+    envToken.trim() !== "" &&
+    !envToken.includes("your_github_personal_access_token")
+  ) {
+    return envToken.trim();
+  }
+  return null;
+}
+
 export function isTokenConfigured(): boolean {
-  const token = process.env.GITHUB_TOKEN;
-  return !!(token && token !== "your_github_personal_access_token_here" && token.trim() !== "");
+  const token = getGitHubToken();
+  return !!(token && token.trim() !== "");
 }
 
 export async function fetchGrandTurfHorses(repo: string, branch: string): Promise<Horse[]> {
-  const token = process.env.GITHUB_TOKEN;
+  const token = getGitHubToken();
   const hasToken = isTokenConfigured();
 
   const headers: Record<string, string> = {
@@ -86,12 +98,12 @@ export async function saveHorseToGitHubOrCache(
   repo: string,
   branch: string
 ): Promise<{ githubSaved: boolean; message: string }> {
-  const token = process.env.GITHUB_TOKEN;
+  const token = getGitHubToken();
   const file = `grandturf/${horse.id}.json`;
   let githubSaved = false;
   let message = "";
 
-  if (token && token !== "your_github_personal_access_token_here" && token.trim() !== "") {
+  if (token) {
     try {
       const metaUrl = `https://api.github.com/repos/${repo}/contents/${file}?ref=${branch}`;
       let sha: string | undefined = undefined;
@@ -136,15 +148,26 @@ export async function saveHorseToGitHubOrCache(
 
       if (putResponse.ok) {
         githubSaved = true;
-        message = `Successfully committed horse '${horse.name}' (${horse.id}) to GitHub repository.`;
+        message = `Successfully committed horse '${horse.name}' (${horse.id}) to GitHub repository '${repo}' (branch: ${branch}).`;
       } else {
-        message = `Saved horse in-memory sandbox. (GitHub commit status ${putResponse.status})`;
+        let errDetail = "";
+        try {
+          const errJson = await putResponse.json() as any;
+          if (errJson && errJson.message) {
+            errDetail = `: ${errJson.message}`;
+          }
+        } catch {
+          /* ignore parse error */
+        }
+        console.error(`[Grand Turf GitHub PUT Error] HTTP ${putResponse.status}${errDetail}`);
+        message = `Saved to local in-memory sandbox. GitHub commit failed (Status ${putResponse.status}${errDetail}). Please verify GITHUB_TOKEN permissions.`;
       }
     } catch (e: any) {
-      message = `Saved horse in-memory sandbox. (${e.message})`;
+      console.error("[Grand Turf GitHub PUT Exception]", e);
+      message = `Saved to local in-memory sandbox. GitHub commit error (${e.message}).`;
     }
   } else {
-    message = "Saved horse in active sandbox memory storage.";
+    message = "Saved to local in-memory sandbox. (GITHUB_TOKEN environment variable is not configured).";
   }
 
   // Always update in-memory cache

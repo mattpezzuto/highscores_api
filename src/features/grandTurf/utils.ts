@@ -113,6 +113,7 @@ export function sanitizeAndEnrichHorse(raw: any): Horse {
       shows: raw.racingRecord?.shows ?? 0,
       earnings: raw.racingRecord?.earnings ?? 0
     },
+    trainer_id: raw.trainer_id ?? raw.trainerId ?? raw.trainer ?? null,
     createdAt: raw.createdAt || new Date().toISOString()
   };
 }
@@ -130,7 +131,8 @@ export function getRandomStat(min = 62, max = 88): number {
 export function createRandomHorseData(
   customName?: string,
   customGender?: "Stallion" | "Mare" | "Colt" | "Filly",
-  customCoat?: string
+  customCoat?: string,
+  customTrainerId?: string | null
 ): Horse {
   const prefix = getRandomItem(HORSE_NAME_PREFIXES);
   const suffix = getRandomItem(HORSE_NAME_SUFFIXES);
@@ -210,6 +212,7 @@ export function createRandomHorseData(
       shows: 0,
       earnings: 0
     },
+    trainer_id: customTrainerId ?? null,
     createdAt: now.toISOString()
   };
 
@@ -221,7 +224,8 @@ export function breedChildHorse(
   dam: Horse,
   customName?: string,
   customGender?: "Colt" | "Filly",
-  customCoat?: string
+  customCoat?: string,
+  customTrainerId?: string | null
 ): Horse {
   const suffix = getRandomItem(HORSE_NAME_SUFFIXES);
   const sireFirstName = sire.name.split(" ")[0];
@@ -313,6 +317,7 @@ export function breedChildHorse(
       shows: 0,
       earnings: 0
     },
+    trainer_id: customTrainerId ?? sire.trainer_id ?? dam.trainer_id ?? null,
     createdAt: now.toISOString()
   };
 

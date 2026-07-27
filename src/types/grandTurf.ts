@@ -58,6 +58,7 @@ export interface Horse {
   dob?: string;
   age?: number;
   jockeySilksColor?: string;
+  trainer_id?: string | null;
 }
 
 export interface GrandTurfAPIResponse {

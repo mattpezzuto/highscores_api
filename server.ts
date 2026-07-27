@@ -46,12 +46,24 @@ interface AcademyCacheEntry {
 const academyCache: Record<string, AcademyCacheEntry> = {};
 
 
+function getGitHubToken(): string | null {
+  const envToken = process.env.GITHUB_TOKEN;
+  if (
+    envToken &&
+    envToken.trim() !== "" &&
+    !envToken.includes("your_github_personal_access_token")
+  ) {
+    return envToken.trim();
+  }
+  return null;
+}
+
 /**
  * Helper to check if GITHUB_TOKEN is configured in environment
  */
 function isTokenConfigured(): boolean {
-  const token = process.env.GITHUB_TOKEN;
-  return !!(token && token !== "your_github_personal_access_token_here" && token.trim() !== "");
+  const token = getGitHubToken();
+  return !!(token && token.trim() !== "");
 }
 
 /**
@@ -61,8 +73,8 @@ function isTokenConfigured(): boolean {
  */
 async function fetchHighscoresRaw(repo: string, file: string, branch: string): Promise<{ data: HighscoresData; url: string; latency: number }> {
   const startTime = Date.now();
-  const token = process.env.GITHUB_TOKEN;
-  const hasToken = token && token !== "your_github_personal_access_token_here" && token.trim() !== "";
+  const token = getGitHubToken();
+  const hasToken = isTokenConfigured();
 
   // 1. If GITHUB_TOKEN is configured, use the official GitHub REST API /contents endpoint
   // This supports private repositories seamlessly as raw.githubusercontent.com ignores Bearer authorization.
@@ -451,8 +463,8 @@ app.post("/api/highscores", async (req, res) => {
     };
 
     // 5. If GitHub Developer Token is available, commit back automatically!
-    const token = process.env.GITHUB_TOKEN;
-    if (token && token !== "your_github_personal_access_token_here" && token.trim() !== "") {
+    const token = getGitHubToken();
+    if (token) {
       const metaUrl = `https://api.github.com/repos/${repo}/contents/${file}?ref=${branch}`;
       let sha: string | undefined = undefined;
 
@@ -557,8 +569,8 @@ app.post("/api/highscores", async (req, res) => {
  * Fetches all Academy Jedis from GitHub directory/files in parallel.
  */
 async function fetchAcademyJedis(repo: string, branch: string): Promise<Jedi[]> {
-  const token = process.env.GITHUB_TOKEN;
-  const hasToken = token && token !== "your_github_personal_access_token_here" && token.trim() !== "";
+  const token = getGitHubToken();
+  const hasToken = isTokenConfigured();
   
   const headers: Record<string, string> = {
     "User-Agent": "Academy-Jedi-App"
@@ -747,10 +759,10 @@ app.post("/api/academy", async (req, res) => {
   cleanJedi.id = id;
   
   try {
-    const token = process.env.GITHUB_TOKEN;
+    const token = getGitHubToken();
     const file = `academy/${id}.json`;
     
-    if (token && token !== "your_github_personal_access_token_here" && token.trim() !== "") {
+    if (token) {
       const metaUrl = `https://api.github.com/repos/${repo}/contents/${file}?ref=${branch}`;
       let sha: string | undefined = undefined;
       

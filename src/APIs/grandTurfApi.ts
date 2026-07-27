@@ -16,6 +16,8 @@ export interface GenerateHorsePayload {
   name?: string;
   gender?: "Stallion" | "Mare" | "";
   coatColor?: string;
+  trainer_id?: string;
+  trainerId?: string;
 }
 
 export interface BreedHorsePayload {
@@ -23,6 +25,8 @@ export interface BreedHorsePayload {
   damId: string;
   name?: string;
   gender?: "Colt" | "Filly" | "";
+  trainer_id?: string;
+  trainerId?: string;
 }
 
 export interface SimulateRacePayload {
@@ -69,6 +73,8 @@ export async function generateHorse(payload: GenerateHorsePayload = {}): Promise
   if (payload.name?.trim()) body.name = payload.name.trim();
   if (payload.gender) body.gender = payload.gender;
   if (payload.coatColor?.trim()) body.coatColor = payload.coatColor.trim();
+  const trainerId = payload.trainer_id || payload.trainerId;
+  if (trainerId?.trim()) body.trainer_id = trainerId.trim();
 
   const res = await fetch("/api/grandturf/horses/generate", {
     method: "POST",
@@ -89,6 +95,8 @@ export async function breedHorse(payload: BreedHorsePayload): Promise<any> {
   };
   if (payload.name?.trim()) body.name = payload.name.trim();
   if (payload.gender) body.gender = payload.gender;
+  const trainerId = payload.trainer_id || payload.trainerId;
+  if (trainerId?.trim()) body.trainer_id = trainerId.trim();
 
   const res = await fetch("/api/grandturf/horses/breed", {
     method: "POST",

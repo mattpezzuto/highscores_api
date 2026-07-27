@@ -64,6 +64,7 @@ export default function GrandTurfDashboard({ onBack }: GrandTurfDashboardProps) 
   const [genName, setGenName] = useState("");
   const [genGender, setGenGender] = useState<"Stallion" | "Mare" | "">("");
   const [genCoat, setGenCoat] = useState("");
+  const [genTrainerId, setGenTrainerId] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [genResponse, setGenResponse] = useState<GrandTurfSingleHorseAPIResponse | null>(null);
 
@@ -126,7 +127,8 @@ export default function GrandTurfDashboard({ onBack }: GrandTurfDashboardProps) 
       const data = await generateHorse({
         name: genName,
         gender: genGender,
-        coatColor: genCoat
+        coatColor: genCoat,
+        trainer_id: genTrainerId
       });
       setGenResponse(data);
       if (data.success && data.data) {
@@ -497,6 +499,12 @@ export default function GrandTurfDashboard({ onBack }: GrandTurfDashboardProps) 
                           <span className="text-slate-400 font-semibold uppercase text-[9px]">Potential Ceiling</span>
                           <span className="font-mono font-extrabold text-emerald-700">{horse.stats.potential || 90} MAX</span>
                         </div>
+                        {horse.trainer_id && (
+                          <div className="flex justify-between text-[11px]">
+                            <span className="text-slate-400 font-semibold uppercase text-[9px]">Trainer ID</span>
+                            <span className="font-mono font-bold text-amber-700 truncate max-w-[140px]">{horse.trainer_id}</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Stats Overview bars */}
@@ -580,6 +588,19 @@ export default function GrandTurfDashboard({ onBack }: GrandTurfDashboardProps) 
                   value={genName}
                   onChange={(e) => setGenName(e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  Trainer ID (Optional - Assigned to generated horse)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. trainer_alpha_01"
+                  value={genTrainerId}
+                  onChange={(e) => setGenTrainerId(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 font-mono focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
@@ -691,6 +712,30 @@ export default function GrandTurfDashboard({ onBack }: GrandTurfDashboardProps) 
                         </span>
                       </div>
 
+                      {/* Storage Persistence / GitHub Status Notification Banner */}
+                      {genResponse.message && (
+                        <div className={`p-3 rounded-xl border text-xs font-mono space-y-1 ${
+                          genResponse.simulation
+                            ? "bg-amber-950/40 border-amber-800/60 text-amber-300"
+                            : "bg-emerald-950/40 border-emerald-800/60 text-emerald-300"
+                        }`}>
+                          <div className="font-bold flex items-center gap-1.5">
+                            {genResponse.simulation ? (
+                              <>
+                                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                                <span>Storage Mode: In-Memory Sandbox Cache</span>
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Storage Mode: Committed to GitHub</span>
+                              </>
+                            )}
+                          </div>
+                          <p className="text-[11px] opacity-90 leading-relaxed">{genResponse.message}</p>
+                        </div>
+                      )}
+
                       {/* Raw JSON Code view */}
                       <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 max-h-[320px] overflow-y-auto text-[11px] font-mono text-emerald-400">
                         <pre>{JSON.stringify(genResponse, null, 2)}</pre>
@@ -711,7 +756,7 @@ export default function GrandTurfDashboard({ onBack }: GrandTurfDashboardProps) 
                 curl -X POST "{originUrl}/api/grandturf/horses/generate"
               </span>
               <button
-                onClick={() => copyToClipboard(`curl -X POST "${originUrl}/api/grandturf/horses/generate" -H "Content-Type: application/json" -d '{"name":"${genName || "Apex Sovereign"}", "gender":"${genGender || "Stallion"}"}'`, "post_gen")}
+                onClick={() => copyToClipboard(`curl -X POST "${originUrl}/api/grandturf/horses/generate" -H "Content-Type: application/json" -d '{"name":"${genName || "Apex Sovereign"}", "gender":"${genGender || "Stallion"}", "trainer_id":"${genTrainerId || "trainer_001"}"}'`, "post_gen")}
                 className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[10px] transition cursor-pointer shrink-0"
               >
                 {copiedUrl === "post_gen" ? "Copied" : "Copy cURL"}
@@ -914,6 +959,30 @@ export default function GrandTurfDashboard({ onBack }: GrandTurfDashboardProps) 
                           </div>
                         </div>
                       </div>
+
+                      {/* Storage Persistence / GitHub Status Notification Banner */}
+                      {breedResponse.message && (
+                        <div className={`p-3 rounded-xl border text-xs font-mono space-y-1 ${
+                          breedResponse.simulation
+                            ? "bg-amber-950/40 border-amber-800/60 text-amber-300"
+                            : "bg-emerald-950/40 border-emerald-800/60 text-emerald-300"
+                        }`}>
+                          <div className="font-bold flex items-center gap-1.5">
+                            {breedResponse.simulation ? (
+                              <>
+                                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                                <span>Storage Mode: In-Memory Sandbox Cache</span>
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Storage Mode: Committed to GitHub</span>
+                              </>
+                            )}
+                          </div>
+                          <p className="text-[11px] opacity-90 leading-relaxed">{breedResponse.message}</p>
+                        </div>
+                      )}
 
                       {/* Raw JSON Code view */}
                       <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 max-h-[280px] overflow-y-auto text-[11px] font-mono text-indigo-300">
@@ -1312,13 +1381,14 @@ export default function GrandTurfDashboard({ onBack }: GrandTurfDashboardProps) 
                   <pre className="bg-slate-50 p-2.5 rounded border border-slate-200 text-[11px] font-mono text-slate-800">{`{
   "name": "Optional Custom Name",
   "gender": "Stallion" | "Mare",
-  "coatColor": "Bay" | "Chestnut" | "Black"
+  "coatColor": "Bay" | "Chestnut" | "Black",
+  "trainer_id": "trainer_123"
 }`}</pre>
                 </div>
                 <div className="bg-slate-900 text-slate-200 p-3 rounded-lg font-mono text-[11px] flex justify-between items-center">
-                  <code>curl -X POST "{originUrl}/api/grandturf/horses/generate" -H "Content-Type: application/json" -d '&#123;"name":"Thunder Knight"&#125;'</code>
+                  <code>curl -X POST "{originUrl}/api/grandturf/horses/generate" -H "Content-Type: application/json" -d '&#123;"name":"Thunder Knight","trainer_id":"trainer_123"&#125;'</code>
                   <button
-                    onClick={() => copyToClipboard(`curl -X POST "${originUrl}/api/grandturf/horses/generate" -H "Content-Type: application/json" -d '{"name":"Thunder Knight"}'`, "doc_gen")}
+                    onClick={() => copyToClipboard(`curl -X POST "${originUrl}/api/grandturf/horses/generate" -H "Content-Type: application/json" -d '{"name":"Thunder Knight","trainer_id":"trainer_123"}'`, "doc_gen")}
                     className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[10px] cursor-pointer shrink-0 ml-2"
                   >
                     {copiedUrl === "doc_gen" ? "Copied" : "Copy"}
@@ -1426,6 +1496,12 @@ export default function GrandTurfDashboard({ onBack }: GrandTurfDashboardProps) 
                   <span className="text-slate-400 font-bold uppercase text-[9px] block">Preferred Track / Dist</span>
                   <span className="font-semibold text-slate-800">{selectedHorse.preferredTrack} &bull; {selectedHorse.preferredDistance}</span>
                 </div>
+                {selectedHorse.trainer_id && (
+                  <div>
+                    <span className="text-slate-400 font-bold uppercase text-[9px] block">Trainer ID</span>
+                    <span className="font-mono font-bold text-amber-700">{selectedHorse.trainer_id}</span>
+                  </div>
+                )}
               </div>
 
               {/* Special Traits */}
